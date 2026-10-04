@@ -1,0 +1,56 @@
+import {
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
+
+export const matchStatus = pgEnum('match_status', [
+  'scheduled',
+  'live',
+  'finished',
+]);
+
+export const matches = pgTable('matches', {
+  id: serial('id').primaryKey(),
+  sport: text('sport').notNull(),
+  homeTeam: text('home_team').notNull(),
+  awayTeam: text('away_team').notNull(),
+  status: matchStatus('status').default('scheduled').notNull(),
+  startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+  endTime: timestamp('end_time', { withTimezone: true }),
+  homeScore: integer('home_score').default(0).notNull(),
+  awayScore: integer('away_score').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const commentary = pgTable(
+  'commentary',
+  {
+    id: serial('id').primaryKey(),
+    matchId: integer('match_id')
+      .notNull()
+      .references(() => matches.id, { onDelete: 'cascade' }),
+    minute: integer('minute'),
+    sequence: integer('sequence').default(0).notNull(),
+    period: text('period'),
+    eventType: text('event_type').notNull(),
+    actor: text('actor'),
+    team: text('team'),
+    message: text('message'),
+    metadata: jsonb('metadata').default({}).notNull(),
+    tags: text('tags').array().default([]).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('commentary_match_sequence_idx').on(table.matchId, table.sequence),
+  ],
+);
