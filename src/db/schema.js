@@ -9,7 +9,7 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 
-export const matchStatus = pgEnum('match_status', [
+export const matchStatusEnum = pgEnum('match_status', [
   'scheduled',
   'live',
   'finished',
@@ -20,7 +20,7 @@ export const matches = pgTable('matches', {
   sport: text('sport').notNull(),
   homeTeam: text('home_team').notNull(),
   awayTeam: text('away_team').notNull(),
-  status: matchStatus('status').default('scheduled').notNull(),
+  status: matchStatusEnum('status').default('scheduled').notNull(),
   startTime: timestamp('start_time', { withTimezone: true }).notNull(),
   endTime: timestamp('end_time', { withTimezone: true }),
   homeScore: integer('home_score').default(0).notNull(),
