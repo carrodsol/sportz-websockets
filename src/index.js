@@ -1,8 +1,8 @@
 import express from 'express'
-import { matchRouter } from './routes/matches';
+import { matchRouter } from './routes/matches.js';
 
 const app = express();
-const port = 8080;
+const port = 8000;
 
 // Middleware
 app.use(express.json());
