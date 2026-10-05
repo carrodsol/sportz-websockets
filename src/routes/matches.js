@@ -1,0 +1,43 @@
+import { Router } from "express";
+import { createMatchSchema } from "../validation/matches";
+import { matches } from "../db/schema.js";
+import { db } from "../db/db.js";
+
+export const matchRouter = Router();
+
+const getStatus = (startTime, endTime) => {
+    const now = Date.now();
+    const start = new Date(startTime).getTime();
+    const finish = new Date(endTime).getTime();
+
+    if (now < start) return "scheduled";
+    if (now >= start && now <= finish) return "live";
+    return "completed";
+};
+
+matchRouter.get("/", (req, res) => {
+    res.status(200).json({ message: "Matches List" });
+});
+
+matchRouter.post("/", async (req, res) => {
+    const parsed = createMatchSchema.safeParse(req.body);
+    const {data: {startTime, endTime, homeScore, awayScore}} = parsed;
+
+    if(!parsed.success) {
+        return res.status(400).json({error: 'Invalid payload.', details: JSON.stringify(parsed.error)});
+        }
+    try {
+        const [event] = await db.insert(matches).values({
+            ...parsed.data,
+            startTime: new Date(startTime),
+            endTime: new Date(endTime),
+            homeScore: homeScore ?? 0,
+            awayScore: awayScore ?? 0,
+            status: getStatus(startTime, endTime),
+        }).returning();
+
+            res.status(201).json({data: event});
+        } catch(e) {
+            res.status(500).json({error: 'Failed to create match.', details: JSON.stringify(e)});
+        }
+    })
